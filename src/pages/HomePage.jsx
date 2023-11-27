@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from "react";
-import Note from "../components/Note";
-import Add from "../components/Add";
-import SearchBar from "../components/SearchBar";
+import TopBar from "../components/TopBar";
+import TagButtons from "../components/TagButtons";
+import RenderNotes from "../components/RenderNotes";
 
 function HomePage() {
   const [data, setData] = useState(null);
   const [tagSections, setTagSections] = useState(["All"]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filteredData, setFilteredData] = useState(null);
   const [selectedTag, setSelectedTag] = useState("All");
-
   const apiUrl = process.env.REACT_APP_API_URL;
+
+  const [originalData, setOriginalData] = useState(null); //for searching
 
   const fetchData = async () => {
     try {
@@ -23,9 +22,9 @@ function HomePage() {
       const result = await response.json();
       setData(result);
 
-      // Extract unique tags from the fetched data
       const uniqueTags = Array.from(new Set(result.map((item) => item.tag)));
       setTagSections(["All", ...uniqueTags]);
+      setOriginalData(result);
     } catch (error) {
       console.error("Error fetching data:", error.message);
     }
@@ -33,46 +32,143 @@ function HomePage() {
 
   useEffect(() => {
     fetchData();
-  }, []); // The empty dependency array ensures it runs only once on mount
-
-  const handleSearch = (searchTerm) => {
-    setSearchTerm(searchTerm);
-
-    // Filter notes based on the search term
-    const filteredNotes = data.filter(
-      (note) =>
-        note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        note.content.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    setFilteredData(filteredNotes);
-  };
+  }, []); // the empty dependency array ensures it runs only once on mount
 
   const filterNotesByTag = (tag) => {
     setSelectedTag(tag);
   };
 
-  const renderNotes = () => {
-    if (selectedTag === "All") {
-      return data.map((item) => (
-        <div
-          key={item.id}
-          className={`w-full sm:w-1/2 md:w-1/3 lg:w-1/3 xl:w-1/3 2xl:w-1/4 p-2`}
-        >
-          <Note title={item.title} content={item.content} tag={item.tag} />
-        </div>
-      ));
-    } else {
-      const filteredNotes = data.filter((item) => item.tag === selectedTag);
-      return filteredNotes.map((item) => (
-        <div
-          key={item.id}
-          className={`w-full sm:w-1/2 md:w-1/3 lg:w-1/3 xl:w-1/3 2xl:w-1/4 p-2`}
-        >
-          <Note title={item.title} content={item.content} tag={item.tag} />
-        </div>
-      ));
+  const handleDeleteNote = async (id, tag) => {
+    try {
+      const response = await fetch(`${apiUrl}/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        console.log(`HTTP error! Status: ${response.status}`);
+        return;
+      }
+
+      const updatedData = data.filter((note) => note._id !== id);
+      setData(updatedData);
+      setOriginalData(updatedData);
+
+      const isLastNoteWithTag = !updatedData.some((note) => note.tag === tag);
+
+      if (isLastNoteWithTag) {
+        const uniqueTags = Array.from(
+          new Set(updatedData.map((item) => item.tag))
+        );
+        setTagSections(["All", ...uniqueTags]);
+      }
+    } catch (error) {
+      console.error("Delete note error:", error.message);
+      alert("Error deleting", error.message);
     }
+  };
+
+  const handleUpdateNote = async (id, updatedData) => {
+    try {
+      const tag = data.find((item) => item.id === id);
+      console.log(tag);
+      const response = await fetch(`${apiUrl}/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedData),
+      });
+
+      if (!response.ok) {
+        console.log(`HTTP error! Status: ${response.status}`);
+        return;
+      }
+
+      const updatedNote = await response.json();
+
+      setData((prevData) => {
+        return prevData.map((note) =>
+          note._id === id ? { ...note, ...updatedNote } : note
+        );
+      });
+      setOriginalData((prevData) => {
+        return prevData.map((note) =>
+          note._id === id ? { ...note, ...updatedNote } : note
+        );
+      });
+      // console.log(originalData);
+
+      const updatedData2 = await data.filter((note) => note._id !== id);
+      // console.log(updatedData2);
+      const isLastNoteWithTag = !updatedData2.some((note) => note.tag === tag);
+
+      // console.log(isLastNoteWithTag);
+
+      if (isLastNoteWithTag) {
+        const uniqueTags = Array.from(
+          new Set(updatedData2.map((item) => item.tag))
+        );
+        setTagSections(["All", ...uniqueTags]);
+      }
+
+      if (!tagSections.includes(updatedNote.tag)) {
+        setTagSections((prevData) => [...prevData, updatedNote.tag]);
+      }
+    } catch (error) {
+      console.error("Update note error:", error.message);
+      alert("Error updating", error.message);
+    }
+  };
+
+  const handleNewNote = async (newNote) => {
+    try {
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newNote),
+      });
+
+      if (!response.ok) {
+        console.log(`HTTP error! Status: ${response.status}`);
+        return;
+      }
+
+      const createdNote = await response.json();
+
+      setData((prevData) => [...prevData, createdNote]);
+
+      setOriginalData((prevData) => [...prevData, createdNote]);
+
+      //if updated tag not there adding it
+      if (!tagSections.includes(createdNote.tag)) {
+        setTagSections((prevData) => [...prevData, createdNote.tag]);
+      }
+    } catch (error) {
+      console.error("Create note error:", error.message);
+      alert("Error adding", error.message);
+    }
+  };
+
+  const handleSearchData = (searchTerm) => {
+    if (!originalData) {
+      return;
+    }
+
+    if (!searchTerm) {
+      // If search term is empty, show all notes
+      setData(originalData);
+      return;
+    }
+
+    const filteredData = originalData.filter(
+      (note) =>
+        note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        note.content.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    setData(filteredData);
   };
 
   return (
@@ -82,30 +178,23 @@ function HomePage() {
       </header>
 
       <div className="flex justify-center mt-4">
-        {tagSections.map((tag) => (
-          <button
-            key={tag}
-            className={`mr-2 lg:mr-3 p-0.5 cursor-pointer md:p-1.5 lg:p-4 ${
-              selectedTag === tag ? "font-bold text-xl" : "text-md"
-            }`}
-            onClick={() => filterNotesByTag(tag)}
-          >
-            {tag}
-          </button>
-        ))}
+        <TagButtons
+          tagSections={tagSections}
+          selectedTag={selectedTag}
+          filterNotesByTag={filterNotesByTag}
+        />
       </div>
-      <div className="absolute right-1 md:right-8  mt-4 ">
-        <SearchBar onSearch={handleSearch} />
-      </div>
+      <TopBar onAdd={handleNewNote} data={data} onSearch={handleSearchData} />
       {data ? (
-        <>
-          <div className="lg:ml-8 w-[30vw] mt-4">
-            <Add />
-          </div>
-          <div className={`mt-8 flex flex-wrap `}>{renderNotes()}</div>
-        </>
+        <div className={`mt-8 flex flex-wrap `}>
+          <RenderNotes
+            selectedTag={selectedTag}
+            data={data}
+            onDelete={handleDeleteNote}
+            onEdit={handleUpdateNote}
+          />
+        </div>
       ) : (
-        // Loading message
         <div>Loading...</div>
       )}
     </div>

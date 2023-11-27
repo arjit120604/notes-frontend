@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 function SearchBar({ onSearch }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -6,6 +6,15 @@ function SearchBar({ onSearch }) {
   const handleSearch = () => {
     onSearch(searchTerm);
   };
+  useEffect(() => {
+    if (searchTerm === "") {
+      const delayDebounceFn = setTimeout(() => {
+        onSearch(searchTerm);
+      }, 400);
+
+      return () => clearTimeout(delayDebounceFn);
+    }
+  }, [searchTerm, onSearch]);
 
   return (
     <div className="flex items-center">

@@ -3,7 +3,7 @@ import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Edit from "./Edit";
 
-const Note = ({ title, content, tag }) => {
+const Note = (props) => {
   const tagColors = [
     {
       tag: "tag1",
@@ -17,10 +17,9 @@ const Note = ({ title, content, tag }) => {
       text: "text-yellow-700",
       bgTag: "bg-green-100",
     },
-    // Add more color mappings as needed
   ];
 
-  const foundTag = tagColors.find((color) => color.tag === tag);
+  const foundTag = tagColors.find((color) => color.tag === props.tag);
   const backgroundColor = foundTag ? foundTag.bgNote : "bg-yellow-200";
   const tagTextColor = foundTag ? foundTag.text : "text-yellow-800";
   const tagBg = foundTag ? foundTag.bgTag : "bg-green-100";
@@ -31,18 +30,29 @@ const Note = ({ title, content, tag }) => {
         className={`border p-4 mx-4 my-2 ${backgroundColor} relative h-[20vh]`}
       >
         <div className="absolute top-0 right-0 mt-1 mr-[3rem]">
-          <Edit title={title} content={content} tag={tag} />
+          <Edit
+            title={props.title}
+            content={props.content}
+            tag={props.tag}
+            _id={props._id}
+            onEdit={props.onEdit}
+          />
         </div>
-        <button className="absolute top-0 right-0 mt-1 mr-1 bg-red-500 text-white px-3 py-1.5 rounded hover:bg-red-600">
+        <button
+          className="absolute top-0 right-0 mt-1 mr-1 bg-red-500 text-white px-3 py-1.5 rounded hover:bg-red-600 "
+          onClick={() => props.onDelete(props._id)}
+        >
           <FontAwesomeIcon icon={faTrash} />
         </button>
         <div>
-          <h4 className="text-xl font-mono font-bold mb-2">{title}</h4>
-          <p className="text-gray-700 font-mono mb-2">{content}</p>
+          <h4 className="text-xl font-mono font-bold mb-2">{props.title}</h4>
+          <p className="text-gray-700 font-mono mb-2">{props.content}</p>
           <div className="flex items-center justify-end">
-            <span className={`text-sm font-mono ${tagTextColor} ${tagBg}`}>
-              #{tag}
-            </span>
+            {props.tag && (
+              <span className={`text-sm font-mono ${tagTextColor} ${tagBg}`}>
+                #{props.tag}
+              </span>
+            )}
           </div>
         </div>
       </div>
