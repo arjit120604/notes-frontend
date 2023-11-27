@@ -7,7 +7,7 @@ function HomePage() {
   const [data, setData] = useState(null);
   const [tagSections, setTagSections] = useState(["All"]);
   const [selectedTag, setSelectedTag] = useState("All");
-  const apiUrl = "https://notes-backend-c5i7.onrender.com/api/notes";
+  const apiUrl = process.env.REACT_APP_API_URL;
 
   const [originalData, setOriginalData] = useState(null); //for searching
 
