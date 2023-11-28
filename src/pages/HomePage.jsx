@@ -2,8 +2,11 @@ import React, { useEffect, useState } from "react";
 import TopBar from "../components/TopBar";
 import TagButtons from "../components/TagButtons";
 import RenderNotes from "../components/RenderNotes";
+import jwt from "jsonwebtoken";
+import { useNavigate } from "react-router-dom";
 
 function HomePage() {
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [tagSections, setTagSections] = useState(["All"]);
   const [selectedTag, setSelectedTag] = useState("All");
@@ -13,9 +16,12 @@ function HomePage() {
 
   const fetchData = async () => {
     try {
-      const response = await fetch(apiUrl);
+      const response = await fetch(apiUrl, {
+        headers: { "x-access-token": localStorage.getItem("token") },
+      });
 
       if (!response.ok) {
+        console.error(`HTTP error! Status: ${response.status}`);
         throw new Error("Network response was not ok");
       }
 
@@ -31,7 +37,17 @@ function HomePage() {
   };
 
   useEffect(() => {
-    fetchData();
+    const token = localStorage.getItem("token");
+    if (token) {
+      const user = jwt.decode(token);
+      if (!user) {
+        localStorage.removeItem("token");
+        alert("user not logged in");
+        navigate("/login");
+      } else {
+        fetchData();
+      }
+    }
   }, []); // the empty dependency array ensures it runs only once on mount
 
   const filterNotesByTag = (tag) => {
