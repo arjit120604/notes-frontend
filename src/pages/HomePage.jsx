@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import TopBar from "../components/TopBar";
 import TagButtons from "../components/TagButtons";
 import RenderNotes from "../components/RenderNotes";
-import jwt from "jsonwebtoken";
+// import jwt from "jsonwebtoken";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 
 function HomePage() {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ function HomePage() {
 
   const fetchData = async () => {
     try {
+      console.log(localStorage.getItem("token"));
       const response = await fetch(apiUrl, {
         headers: { "x-access-token": localStorage.getItem("token") },
       });
@@ -26,9 +28,14 @@ function HomePage() {
       }
 
       const result = await response.json();
+
+      console.log("result: ", result);
       setData(result);
 
-      const uniqueTags = Array.from(new Set(result.map((item) => item.tag)));
+      console.log(result.map);
+      const uniqueTags = Array.from(
+        new Set(result.notes.map((item) => item.tag))
+      );
       setTagSections(["All", ...uniqueTags]);
       setOriginalData(result);
     } catch (error) {
@@ -38,8 +45,9 @@ function HomePage() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
+    console.log(token);
     if (token) {
-      const user = jwt.decode(token);
+      const user = jwtDecode(token);
       if (!user) {
         localStorage.removeItem("token");
         alert("user not logged in");
@@ -153,7 +161,7 @@ function HomePage() {
 
       const createdNote = await response.json();
 
-      setData((prevData) => [...prevData, createdNote]);
+      setData((prevData) => [...prevData.notes, createdNote]);
 
       setOriginalData((prevData) => [...prevData, createdNote]);
 
@@ -178,7 +186,7 @@ function HomePage() {
       return;
     }
 
-    const filteredData = originalData.filter(
+    const filteredData = originalData.notes.filter(
       (note) =>
         note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         note.content.toLowerCase().includes(searchTerm.toLowerCase())

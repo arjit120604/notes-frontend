@@ -9,28 +9,39 @@ export default function Login() {
   async function loginUser(event) {
     event.preventDefault();
 
-    const response = await fetch(
-      "https://notes-backend-c5i7.onrender.com/auth/login",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username, // Update to use the username state
-          password,
-        }),
+    try {
+      const response = await fetch(
+        "https://notes-backend-c5i7.onrender.com/auth/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username,
+            password,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        // Handle non-2xx responses
+        throw new Error(`HTTP error! Status: ${response.status}`);
       }
-    );
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (data.user) {
-      localStorage.setItem("token", data.user);
-      alert("Login successful");
-      navigate("/home");
-    } else {
-      alert("Please check your username and password");
+      if (data.token) {
+        console.log(data.token);
+        localStorage.setItem("token", data.token);
+        alert("Login successful");
+        navigate("/home");
+      } else {
+        alert("Authentication failed");
+      }
+    } catch (error) {
+      console.error("Error during login:", error);
+      alert("An error occurred during login. Please try again.");
     }
   }
 
