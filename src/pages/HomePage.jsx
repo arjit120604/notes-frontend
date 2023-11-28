@@ -32,7 +32,7 @@ function HomePage() {
       console.log("result: ", result);
       setData(result);
 
-      console.log(result.map);
+      // console.log(result.map);
       const uniqueTags = Array.from(
         new Set(result.notes.map((item) => item.tag))
       );
@@ -160,15 +160,20 @@ function HomePage() {
       }
 
       const createdNote = await response.json();
+      console.log("  cn", createdNote);
 
       setData((prevData) => [...prevData.notes, createdNote]);
 
-      setOriginalData((prevData) => [...prevData, createdNote]);
+      console.log("dd", data);
+
+      setOriginalData((prevData) => [...prevData.notes, createdNote]);
+      console.log("o data ", originalData.notes);
 
       //if updated tag not there adding it
       if (!tagSections.includes(createdNote.tag)) {
         setTagSections((prevData) => [...prevData, createdNote.tag]);
       }
+      console.log("tg ", tagSections);
     } catch (error) {
       console.error("Create note error:", error.message);
       alert("Error adding", error.message);
@@ -193,6 +198,7 @@ function HomePage() {
     );
 
     setData(filteredData);
+    // console.log("dat v filt", data);
   };
 
   return (
