@@ -206,7 +206,7 @@ function HomePage() {
       <header className="font-extrabold font-mono text-8xl text-center pt-3">
         NOTES
       </header>
-      <div className="absolute left-4 top-[9rem] md:right-2 md:top-2 md:left-auto">
+      <div className="absolute left-4 top-[14.7rem] md:right-2 md:top-2 md:left-auto">
         <Logout />
       </div>
 
