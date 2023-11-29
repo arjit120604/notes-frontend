@@ -10,19 +10,16 @@ export default function Login() {
     event.preventDefault();
 
     try {
-      const response = await fetch(
-        "https://notes-backend-c5i7.onrender.com/auth/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            username,
-            password,
-          }),
-        }
-      );
+      const response = await fetch(`${process.env.REACT_APP_AUTH_URL}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          password,
+        }),
+      });
 
       if (!response.ok) {
         // Handle non-2xx responses
@@ -32,7 +29,7 @@ export default function Login() {
       const data = await response.json();
 
       if (data.token) {
-        console.log(data.token);
+        // console.log(data.token);
         localStorage.setItem("token", data.token);
         alert("Login successful");
         navigate("/home");
