@@ -38,6 +38,8 @@ function HomePage() {
       setOriginalData(notes);
     } catch (error) {
       console.error("Error fetching data:", error.message);
+      alert("user not logged in");
+      navigate("/login");
     }
   };
 
@@ -92,6 +94,8 @@ function HomePage() {
     } catch (error) {
       console.error("Delete note error:", error.message);
       alert("Error deleting", error.message);
+      alert("user not logged in");
+      navigate("/login");
     }
   };
 
@@ -114,7 +118,6 @@ function HomePage() {
       }
 
       const updatedNote = await response.json();
-      const { note } = updatedNote;
       console.log(`unote `, updatedNote);
 
       setData((prevData) => {
@@ -148,6 +151,8 @@ function HomePage() {
     } catch (error) {
       console.error("Update note error:", error.message);
       alert("Error updating", error.message);
+      alert("user not logged in");
+      navigate("/login");
     }
   };
 
@@ -187,6 +192,8 @@ function HomePage() {
     } catch (error) {
       console.error("Create note error:", error.message);
       alert("Error adding", error.message);
+      alert("user not logged in");
+      navigate("/login");
     }
   };
 
