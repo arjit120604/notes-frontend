@@ -2,9 +2,9 @@ import React, { useEffect, useState } from "react";
 import TopBar from "../components/TopBar";
 import TagButtons from "../components/TagButtons";
 import RenderNotes from "../components/RenderNotes";
-// import jwt from "jsonwebtoken";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
+import Logout from "../components/Logout";
 
 function HomePage() {
   const token = localStorage.getItem("token");
@@ -14,11 +14,10 @@ function HomePage() {
   const [selectedTag, setSelectedTag] = useState("All");
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  const [originalData, setOriginalData] = useState(null); //for searching
+  const [originalData, setOriginalData] = useState(null);
 
   const fetchData = async () => {
     try {
-      // console.log(localStorage.getItem("token"));
       const response = await fetch(apiUrl, {
         headers: { "x-access-token": localStorage.getItem("token") },
       });
@@ -30,7 +29,6 @@ function HomePage() {
 
       const { notes } = await response.json();
 
-      // console.log("result: ", notes);
       setData(notes);
 
       const uniqueTags = Array.from(new Set(notes.map((item) => item.tag)));
@@ -38,19 +36,21 @@ function HomePage() {
       setOriginalData(notes);
     } catch (error) {
       console.error("Error fetching data:", error.message);
-      alert("user not logged in");
+      alert("User not logged in");
       navigate("/login");
     }
   };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    console.log(token);
-    if (token) {
+    if (!token || token == null) {
+      alert("User not logged in");
+      navigate("/login");
+    } else {
       const user = jwtDecode(token);
       if (!user) {
         localStorage.removeItem("token");
-        alert("user not logged in");
+        alert("User not logged in");
         navigate("/login");
       } else {
         fetchData();
@@ -64,7 +64,6 @@ function HomePage() {
 
   const handleDeleteNote = async (props) => {
     try {
-      console.log(props);
       const response = await fetch(`${apiUrl}/${props._id}`, {
         method: "DELETE",
         headers: {
@@ -94,7 +93,7 @@ function HomePage() {
     } catch (error) {
       console.error("Delete note error:", error.message);
       alert("Error deleting", error.message);
-      alert("user not logged in");
+      alert("User not logged in");
       navigate("/login");
     }
   };
@@ -102,7 +101,6 @@ function HomePage() {
   const handleUpdateNote = async (id, updatedData) => {
     try {
       const tag = data.find((item) => item._id === id);
-      console.log(tag);
       const response = await fetch(`${apiUrl}/${id}`, {
         method: "PUT",
         headers: {
@@ -118,7 +116,6 @@ function HomePage() {
       }
 
       const updatedNote = await response.json();
-      console.log(`unote `, updatedNote);
 
       setData((prevData) => {
         return prevData.map((notes) =>
@@ -130,13 +127,9 @@ function HomePage() {
           notes._id === id ? { ...notes, ...updatedNote } : notes
         );
       });
-      // console.log(originalData);
 
       const updatedData2 = await data.filter((note) => note._id !== id);
-      // console.log(updatedData2);
       const isLastNoteWithTag = !updatedData2.some((note) => note.tag === tag);
-
-      // console.log(isLastNoteWithTag);
 
       if (isLastNoteWithTag) {
         const uniqueTags = Array.from(
@@ -151,7 +144,7 @@ function HomePage() {
     } catch (error) {
       console.error("Update note error:", error.message);
       alert("Error updating", error.message);
-      alert("user not logged in");
+      alert("User not logged in");
       navigate("/login");
     }
   };
@@ -173,26 +166,18 @@ function HomePage() {
       }
 
       const createdNote = await response.json();
-      console.log("  cn", createdNote);
       const { note } = createdNote;
 
       setData((prevData) => [...prevData, note]);
-
-      console.log("dd", data);
-      console.log("notes", note);
-
       setOriginalData((prevData) => [...prevData, note]);
-      console.log("o data ", originalData);
 
-      //if updated tag not there adding it
       if (!tagSections.includes(createdNote.tag)) {
         setTagSections((prevData) => [...prevData, createdNote.tag]);
       }
-      console.log("tg ", tagSections);
     } catch (error) {
       console.error("Create note error:", error.message);
       alert("Error adding", error.message);
-      alert("user not logged in");
+      alert("User not logged in");
       navigate("/login");
     }
   };
@@ -203,7 +188,6 @@ function HomePage() {
     }
 
     if (!searchTerm) {
-      // If search term is empty, show all notes
       setData(originalData);
       return;
     }
@@ -215,7 +199,6 @@ function HomePage() {
     );
 
     setData(filteredData);
-    // console.log("dat v filt", data);
   };
 
   return (
@@ -223,6 +206,9 @@ function HomePage() {
       <header className="font-extrabold font-mono text-8xl text-center pt-3">
         NOTES
       </header>
+      <div className="absolute left-4 top-[9rem] md:right-2 md:top-2 md:left-auto">
+        <Logout />
+      </div>
 
       <div className="flex justify-center mt-4">
         <TagButtons
