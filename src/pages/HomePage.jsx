@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 
 function HomePage() {
+  const token = localStorage.getItem("token");
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [tagSections, setTagSections] = useState(["All"]);
@@ -17,7 +18,7 @@ function HomePage() {
 
   const fetchData = async () => {
     try {
-      console.log(localStorage.getItem("token"));
+      // console.log(localStorage.getItem("token"));
       const response = await fetch(apiUrl, {
         headers: { "x-access-token": localStorage.getItem("token") },
       });
@@ -27,17 +28,14 @@ function HomePage() {
         throw new Error("Network response was not ok");
       }
 
-      const result = await response.json();
+      const { notes } = await response.json();
 
-      console.log("result: ", result);
-      setData(result);
+      // console.log("result: ", notes);
+      setData(notes);
 
-      // console.log(result.map);
-      const uniqueTags = Array.from(
-        new Set(result.notes.map((item) => item.tag))
-      );
+      const uniqueTags = Array.from(new Set(notes.map((item) => item.tag)));
       setTagSections(["All", ...uniqueTags]);
-      setOriginalData(result);
+      setOriginalData(notes);
     } catch (error) {
       console.error("Error fetching data:", error.message);
     }
@@ -56,16 +54,20 @@ function HomePage() {
         fetchData();
       }
     }
-  }, []); // the empty dependency array ensures it runs only once on mount
+  }, []);
 
   const filterNotesByTag = (tag) => {
     setSelectedTag(tag);
   };
 
-  const handleDeleteNote = async (id, tag) => {
+  const handleDeleteNote = async (props) => {
     try {
-      const response = await fetch(`${apiUrl}/${id}`, {
+      console.log(props);
+      const response = await fetch(`${apiUrl}/${props._id}`, {
         method: "DELETE",
+        headers: {
+          "x-access-token": token,
+        },
       });
 
       if (!response.ok) {
@@ -73,11 +75,13 @@ function HomePage() {
         return;
       }
 
-      const updatedData = data.filter((note) => note._id !== id);
+      const updatedData = data.filter((note) => note._id !== props._id);
       setData(updatedData);
       setOriginalData(updatedData);
 
-      const isLastNoteWithTag = !updatedData.some((note) => note.tag === tag);
+      const isLastNoteWithTag = !updatedData.some(
+        (note) => note.tag === props.tag
+      );
 
       if (isLastNoteWithTag) {
         const uniqueTags = Array.from(
@@ -93,12 +97,13 @@ function HomePage() {
 
   const handleUpdateNote = async (id, updatedData) => {
     try {
-      const tag = data.find((item) => item.id === id);
+      const tag = data.find((item) => item._id === id);
       console.log(tag);
       const response = await fetch(`${apiUrl}/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          "x-access-token": token,
         },
         body: JSON.stringify(updatedData),
       });
@@ -109,15 +114,17 @@ function HomePage() {
       }
 
       const updatedNote = await response.json();
+      const { note } = updatedNote;
+      console.log(`unote `, updatedNote);
 
       setData((prevData) => {
-        return prevData.map((note) =>
-          note._id === id ? { ...note, ...updatedNote } : note
+        return prevData.map((notes) =>
+          notes._id === id ? { ...notes, ...updatedNote } : notes
         );
       });
       setOriginalData((prevData) => {
-        return prevData.map((note) =>
-          note._id === id ? { ...note, ...updatedNote } : note
+        return prevData.map((notes) =>
+          notes._id === id ? { ...notes, ...updatedNote } : notes
         );
       });
       // console.log(originalData);
@@ -150,6 +157,7 @@ function HomePage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-access-token": token,
         },
         body: JSON.stringify(newNote),
       });
@@ -161,13 +169,15 @@ function HomePage() {
 
       const createdNote = await response.json();
       console.log("  cn", createdNote);
+      const { note } = createdNote;
 
-      setData((prevData) => [...prevData.notes, createdNote]);
+      setData((prevData) => [...prevData, note]);
 
       console.log("dd", data);
+      console.log("notes", note);
 
-      setOriginalData((prevData) => [...prevData.notes, createdNote]);
-      console.log("o data ", originalData.notes);
+      setOriginalData((prevData) => [...prevData, note]);
+      console.log("o data ", originalData);
 
       //if updated tag not there adding it
       if (!tagSections.includes(createdNote.tag)) {
@@ -191,7 +201,7 @@ function HomePage() {
       return;
     }
 
-    const filteredData = originalData.notes.filter(
+    const filteredData = originalData.filter(
       (note) =>
         note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         note.content.toLowerCase().includes(searchTerm.toLowerCase())
