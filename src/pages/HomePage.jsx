@@ -170,9 +170,10 @@ function HomePage() {
 
       setData((prevData) => [...prevData, note]);
       setOriginalData((prevData) => [...prevData, note]);
+      console.log(note);
 
-      if (!tagSections.includes(createdNote.tag)) {
-        setTagSections((prevData) => [...prevData, createdNote.tag]);
+      if (!tagSections.includes(note.tag)) {
+        setTagSections((prevData) => [...prevData, note.tag]);
       }
     } catch (error) {
       console.error("Create note error:", error.message);
