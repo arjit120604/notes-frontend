@@ -9,19 +9,16 @@ export default function Signup() {
   async function registerUser(e) {
     e.preventDefault();
 
-    const response = await fetch(
-      "https://notes-backend-c5i7.onrender.com/auth/register",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username,
-          password,
-        }),
-      }
-    );
+    const response = await fetch(`${process.env.REACT_APP_AUTH_URL}/register`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username,
+        password,
+      }),
+    });
 
     const data = await response.json();
     // alert(data.message);
