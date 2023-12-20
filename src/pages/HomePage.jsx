@@ -6,14 +6,14 @@ import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import Logout from "../components/Logout";
 
-function HomePage() {
+function HomePage(props) {
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [tagSections, setTagSections] = useState(["All"]);
   const [selectedTag, setSelectedTag] = useState("All");
   const apiUrl = process.env.REACT_APP_API_URL;
-
+  const googleId = props.googleId;
   const [originalData, setOriginalData] = useState(null);
 
   const fetchData = async () => {
@@ -41,20 +41,43 @@ function HomePage() {
     }
   };
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token || token == null) {
+  const googleFetchData = async (googleId) => {
+    try {
+      const response = await fetch(`${apiUrl}/${googleId}`);
+
+      const notes = await response.json();
+
+      setData(notes);
+
+      const uniqueTags = Array.from(new Set(notes.map((item) => item.tag)));
+      setTagSections(["All", ...uniqueTags]);
+      setOriginalData(notes);
+    } catch (error) {
+      console.error("Error fetching data:", error.message);
       alert("User not logged in");
       navigate("/login");
-    } else {
-      const user = jwtDecode(token);
-      if (!user) {
-        localStorage.removeItem("token");
+    }
+  };
+
+  useEffect(() => {
+    // console.log(props.googleId);
+    if (props.googleId === undefined) {
+      const token = localStorage.getItem("token");
+      if (!token || token == null) {
         alert("User not logged in");
         navigate("/login");
       } else {
-        fetchData();
+        const user = jwtDecode(token);
+        if (!user) {
+          localStorage.removeItem("token");
+          alert("User not logged in");
+          navigate("/login");
+        } else {
+          fetchData();
+        }
       }
+    } else {
+      googleFetchData(props.googleId);
     }
   }, []);
 
@@ -98,9 +121,44 @@ function HomePage() {
     }
   };
 
+  const googleHandleDeleteNote = async (props) => {
+    try {
+      const response = await fetch(`${apiUrl}/${googleId}/${props._id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        console.log(`HTTP error! Status: ${response.status}`);
+        return;
+      }
+
+      const updatedData = data.filter((note) => note._id !== props._id);
+      setData(updatedData);
+      setOriginalData(updatedData);
+
+      const isLastNoteWithTag = !updatedData.some(
+        (note) => note.tag === props.tag
+      );
+
+      if (isLastNoteWithTag) {
+        const uniqueTags = Array.from(
+          new Set(updatedData.map((item) => item.tag))
+        );
+        setTagSections(["All", ...uniqueTags]);
+      }
+    } catch (error) {
+      console.error("Delete note error:", error.message);
+      alert("Error deleting", error.message);
+      alert("User not logged in");
+      navigate("/login");
+    }
+  };
+
   const handleUpdateNote = async (id, updatedData) => {
     try {
-      const tag = data.find((item) => item._id === id);
+      const existingNote = data.find((item) => item._id === id);
+      const tag = existingNote.tag;
+
       const response = await fetch(`${apiUrl}/${id}`, {
         method: "PUT",
         headers: {
@@ -128,14 +186,76 @@ function HomePage() {
         );
       });
 
-      const updatedData2 = await data.filter((note) => note._id !== id);
+      const updatedData2 = data.filter((note) => note._id !== id);
       const isLastNoteWithTag = !updatedData2.some((note) => note.tag === tag);
 
       if (isLastNoteWithTag) {
-        const uniqueTags = Array.from(
-          new Set(updatedData2.map((item) => item.tag))
+        // Check if the tag was updated before updating tagSections
+        const isTagUpdated = tag !== updatedNote.tag;
+
+        if (isTagUpdated) {
+          const uniqueTags = Array.from(
+            new Set(updatedData2.map((item) => item.tag))
+          );
+          setTagSections(["All", ...uniqueTags]);
+        }
+      }
+
+      if (!tagSections.includes(updatedNote.tag)) {
+        setTagSections((prevData) => [...prevData, updatedNote.tag]);
+      }
+    } catch (error) {
+      console.error("Update note error:", error.message);
+      alert("Error updating", error.message);
+      alert("User not logged in");
+      navigate("/login");
+    }
+  };
+
+  const googleHandleUpdateNote = async (id, updatedData) => {
+    try {
+      const existingNote = data.find((item) => item._id === id);
+      const tag = existingNote.tag;
+
+      const response = await fetch(`${apiUrl}/${googleId}/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedData),
+      });
+
+      if (!response.ok) {
+        console.log(`HTTP error! Status: ${response.status}`);
+        return;
+      }
+
+      const updatedNote = await response.json();
+
+      setData((prevData) => {
+        return prevData.map((notes) =>
+          notes._id === id ? { ...notes, ...updatedNote } : notes
         );
-        setTagSections(["All", ...uniqueTags]);
+      });
+      setOriginalData((prevData) => {
+        return prevData.map((notes) =>
+          notes._id === id ? { ...notes, ...updatedNote } : notes
+        );
+      });
+
+      const updatedData2 = data.filter((note) => note._id !== id);
+      const isLastNoteWithTag = !updatedData2.some((note) => note.tag === tag);
+
+      if (isLastNoteWithTag) {
+        // Check if the tag was updated before updating tagSections
+        const isTagUpdated = tag !== updatedNote.tag;
+
+        if (isTagUpdated) {
+          const uniqueTags = Array.from(
+            new Set(updatedData2.map((item) => item.tag))
+          );
+          setTagSections(["All", ...uniqueTags]);
+        }
       }
 
       if (!tagSections.includes(updatedNote.tag)) {
@@ -182,6 +302,35 @@ function HomePage() {
       navigate("/login");
     }
   };
+  const googleHandleNewNote = async (props) => {
+    try {
+      props.user = googleId;
+      console.log(props);
+      const response = await fetch(`${apiUrl}/${googleId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(props),
+      });
+
+      const createdNote = await response.json();
+      const { note } = createdNote;
+
+      setData((prevData) => [...prevData, note]);
+      setOriginalData((prevData) => [...prevData, note]);
+      console.log(note);
+
+      if (!tagSections.includes(note.tag)) {
+        setTagSections((prevData) => [...prevData, note.tag]);
+      }
+    } catch (error) {
+      console.error("Create note error:", error.message);
+      alert("Error adding", error.message);
+      alert("User not logged in");
+      navigate("/login");
+    }
+  };
 
   const handleSearchData = (searchTerm) => {
     if (!originalData) {
@@ -208,7 +357,7 @@ function HomePage() {
         NOTES
       </header>
       <div className="absolute left-4 top-[14.7rem] md:right-2 md:top-2 md:left-auto">
-        <Logout />
+        <Logout googleId={googleId ? true : false} />
       </div>
 
       <div className="flex justify-center mt-4">
@@ -218,14 +367,20 @@ function HomePage() {
           filterNotesByTag={filterNotesByTag}
         />
       </div>
-      <TopBar onAdd={handleNewNote} data={data} onSearch={handleSearchData} />
+      <TopBar
+        onAdd={props.googleId ? googleHandleNewNote : handleNewNote}
+        data={data}
+        onSearch={handleSearchData}
+      />
       {data ? (
         <div className={`mt-8 flex flex-wrap `}>
           <RenderNotes
             selectedTag={selectedTag}
             data={data}
-            onDelete={handleDeleteNote}
-            onEdit={handleUpdateNote}
+            onDelete={
+              props.googleId ? googleHandleDeleteNote : handleDeleteNote
+            }
+            onEdit={props.googleId ? googleHandleUpdateNote : handleUpdateNote}
           />
         </div>
       ) : (

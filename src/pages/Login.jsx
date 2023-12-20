@@ -1,6 +1,7 @@
 import Header from "../components/forAuth/Header";
 // import Login from "./components/forAuth/Login";
 import Login from "../components/forAuth/Login";
+import { GoogleLogin } from "@react-oauth/google";
 
 export default function LoginPage() {
   return (

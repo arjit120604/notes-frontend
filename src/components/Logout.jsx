@@ -1,12 +1,14 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-function Logout() {
+function Logout(props) {
   const navigate = useNavigate();
+  const apiUrl = process.env.REACT_APP_API_URL;
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-
+  const handleLogout = async () => {
+    if (!props.googleId) {
+      localStorage.removeItem("token");
+    }
     alert("Logout Successfull");
     navigate("/login");
   };

@@ -9,6 +9,7 @@ const Add = (props) => {
     title: "",
     content: "",
     tag: "",
+    user: "",
   });
 
   const handleInputChange = (e) => {
