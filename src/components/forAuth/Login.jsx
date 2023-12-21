@@ -43,7 +43,7 @@ export default function Login() {
   }
 
   function onSignIn(googleUser) {
-    window.location.href = `${process.env.REACT_APP_AUTH_URL}google`;
+    window.location.href = `${process.env.REACT_APP_AUTH_URL}/google`;
   }
 
   return (
