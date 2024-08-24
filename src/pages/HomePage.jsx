@@ -12,13 +12,12 @@ function HomePage(props) {
   const [data, setData] = useState(null);
   const [tagSections, setTagSections] = useState(["All"]);
   const [selectedTag, setSelectedTag] = useState("All");
-  const apiUrl = process.env.REACT_APP_API_URL;
   const googleId = props.googleId;
   const [originalData, setOriginalData] = useState(null);
 
   const fetchData = async () => {
     try {
-      const response = await fetch(apiUrl, {
+      const response = await fetch('/api/notes', {
         headers: { "x-access-token": localStorage.getItem("token") },
       });
 
@@ -43,7 +42,7 @@ function HomePage(props) {
 
   const googleFetchData = async (googleId) => {
     try {
-      const response = await fetch(`${apiUrl}/${googleId}`);
+      const response = await fetch(`/api/notes/${googleId}`);
 
       const notes = await response.json();
 
@@ -87,7 +86,7 @@ function HomePage(props) {
 
   const handleDeleteNote = async (props) => {
     try {
-      const response = await fetch(`${apiUrl}/${props._id}`, {
+      const response = await fetch(`/api/notes/${props._id}`, {
         method: "DELETE",
         headers: {
           "x-access-token": token,
@@ -123,7 +122,7 @@ function HomePage(props) {
 
   const googleHandleDeleteNote = async (props) => {
     try {
-      const response = await fetch(`${apiUrl}/${googleId}/${props._id}`, {
+      const response = await fetch(`/api/notes/${googleId}/${props._id}`, {
         method: "DELETE",
       });
 
@@ -159,7 +158,7 @@ function HomePage(props) {
       const existingNote = data.find((item) => item._id === id);
       const tag = existingNote.tag;
 
-      const response = await fetch(`${apiUrl}/${id}`, {
+      const response = await fetch(`/api/notes/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -217,7 +216,7 @@ function HomePage(props) {
       const existingNote = data.find((item) => item._id === id);
       const tag = existingNote.tag;
 
-      const response = await fetch(`${apiUrl}/${googleId}/${id}`, {
+      const response = await fetch(`/api/notes/${googleId}/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -271,7 +270,7 @@ function HomePage(props) {
 
   const handleNewNote = async (newNote) => {
     try {
-      const response = await fetch(apiUrl, {
+      const response = await fetch('/api/notes', {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -306,7 +305,7 @@ function HomePage(props) {
     try {
       props.user = googleId;
       console.log(props);
-      const response = await fetch(`${apiUrl}/${googleId}`, {
+      const response = await fetch(`/api/notes/${googleId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

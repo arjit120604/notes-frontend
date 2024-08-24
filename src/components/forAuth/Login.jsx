@@ -10,7 +10,7 @@ export default function Login() {
     event.preventDefault();
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_AUTH_URL}/login`, {
+      const response = await fetch(`/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -43,7 +43,7 @@ export default function Login() {
   }
 
   function onSignIn(googleUser) {
-    window.location.href = `${process.env.REACT_APP_AUTH_URL}/google`;
+    window.location.href = `/auth/google`;
   }
 
   return (

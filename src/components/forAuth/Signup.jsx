@@ -9,7 +9,7 @@ export default function Signup() {
   async function registerUser(e) {
     e.preventDefault();
 
-    const response = await fetch(`${process.env.REACT_APP_AUTH_URL}/register`, {
+    const response = await fetch(`/auth/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -10,7 +10,7 @@ function SearchBar({ onSearch }) {
     if (searchTerm === "") {
       const delayDebounceFn = setTimeout(() => {
         onSearch(searchTerm);
-      }, 400);
+      }, 200);
 
       return () => clearTimeout(delayDebounceFn);
     }
@@ -23,6 +23,7 @@ function SearchBar({ onSearch }) {
         placeholder="Search..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
+        // onChange={handleSearchTermChange}
         className="border p-2  ml-1 mr-2 w-[42vw] lg:w-[80vw]"
       />
       <button

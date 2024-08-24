@@ -3,13 +3,19 @@ import { useNavigate } from "react-router-dom";
 
 function Logout(props) {
   const navigate = useNavigate();
-  const apiUrl = process.env.REACT_APP_API_URL;
 
   const handleLogout = async () => {
+
     if (!props.googleId) {
       localStorage.removeItem("token");
+    }else{
+      const res = await fetch('/api/logout/', {
+        method: 'POST',
+        credentials: 'include', // Include cookies in the request
+      });
+      console.log(res);
     }
-    alert("Logout Successfull");
+    alert("Logout Successful");
     navigate("/login");
   };
 
